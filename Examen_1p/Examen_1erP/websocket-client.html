@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cliente WebSocket - Notificaciones</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .connected {
+            background: #4CAF50;
+            color: white;
+        }
+        .disconnected {
+            background: #f44336;
+            color: white;
+        }
+        .notification {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .notification-header {
+            font-weight: bold;
+            color: #1976D2;
+            margin-bottom: 5px;
+        }
+        .notification-body {
+            color: #555;
+            font-size: 14px;
+        }
+        .notification-time {
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .clear-btn {
+            background: #f44336;
+        }
+        .clear-btn:hover {
+            background: #da190b;
+        }
+        #notifications {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .counter {
+            background: #FFC107;
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Cliente WebSocket - Notificaciones en Tiempo Real</h1>
+        
+        <div id="status" class="status disconnected">
+            ⚠️ Desconectado del servidor
+        </div>
+
+        <div style="margin: 20px 0;">
+            <button id="connect-btn" onclick="connect()">🔌 Conectar</button>
+            <button id="disconnect-btn" onclick="disconnect()" disabled>🔌 Desconectar</button>
+            <button class="clear-btn" onclick="clearNotifications()">🗑️ Limpiar</button>
+            <span class="counter">📊 Total: <span id="counter">0</span></span>
+        </div>
+
+        <h2>📬 Notificaciones Recibidas:</h2>
+        <div id="notifications"></div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script>
+        let socket = null;
+        let notificationCount = 0;
+
+        function connect() {
+            if (socket) {
+                console.log('Ya está conectado');
+                return;
+            }
+
+            // Conectar al servidor WebSocket
+            socket = io('http://localhost:3000', {
+                transports: ['websocket', 'polling']
+            });
+
+            // Evento: Conexión exitosa
+            socket.on('connect', () => {
+                console.log('✅ Conectado al servidor WebSocket');
+                updateStatus(true);
+                document.getElementById('connect-btn').disabled = true;
+                document.getElementById('disconnect-btn').disabled = false;
+            });
+
+            // Evento: Mensaje de bienvenida
+            socket.on('welcome', (data) => {
+                console.log('👋 Bienvenida:', data);
+                addNotification({
+                    type: 'Sistema: Conexión establecida',
+                    operation: 'CONNECT',
+                    entity: 'WebSocket',
+                    data: data,
+                    timestamp: data.timestamp
+                });
+            });
+
+            // Evento: Notificación desde el servidor
+            socket.on('notification', (notification) => {
+                console.log('📬 Notificación recibida:', notification);
+                addNotification(notification);
+            });
+
+            // Evento: Desconexión
+            socket.on('disconnect', () => {
+                console.log('❌ Desconectado del servidor');
+                updateStatus(false);
+                document.getElementById('connect-btn').disabled = false;
+                document.getElementById('disconnect-btn').disabled = true;
+            });
+
+            // Evento: Error
+            socket.on('error', (error) => {
+                console.error('❌ Error:', error);
+                alert('Error de conexión: ' + error);
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                updateStatus(false);
+                document.getElementById('connect-btn').disabled = false;
+                document.getElementById('disconnect-btn').disabled = true;
+            }
+        }
+
+        function updateStatus(connected) {
+            const statusDiv = document.getElementById('status');
+            if (connected) {
+                statusDiv.className = 'status connected';
+                statusDiv.textContent = '✅ Conectado al servidor WebSocket';
+            } else {
+                statusDiv.className = 'status disconnected';
+                statusDiv.textContent = '⚠️ Desconectado del servidor';
+            }
+        }
+
+        function addNotification(notification) {
+            notificationCount++;
+            document.getElementById('counter').textContent = notificationCount;
+
+            const notificationsDiv = document.getElementById('notifications');
+            const notifElement = document.createElement('div');
+            notifElement.className = 'notification';
+            
+            const time = new Date(notification.timestamp).toLocaleTimeString('es-ES');
+            
+            notifElement.innerHTML = `
+                <div class="notification-header">
+                    ${getIcon(notification.operation)} ${notification.type || 'Notificación'}
+                </div>
+                <div class="notification-body">
+                    <strong>ID:</strong> ${notification.id || 'N/A'}<br>
+                    <strong>Operación:</strong> ${notification.operation}<br>
+                    <strong>Entidad:</strong> ${notification.entity}<br>
+                    <strong>Datos:</strong> <pre style="margin: 5px 0; background: #f5f5f5; padding: 5px; border-radius: 3px; font-size: 12px;">${JSON.stringify(notification.data, null, 2)}</pre>
+                </div>
+                <div class="notification-time">⏰ ${time}</div>
+            `;
+            
+            notificationsDiv.insertBefore(notifElement, notificationsDiv.firstChild);
+        }
+
+        function getIcon(operation) {
+            const icons = {
+                'CREATE': '➕',
+                'UPDATE': '✏️',
+                'DELETE': '🗑️',
+                'CONNECT': '🔌'
+            };
+            return icons[operation] || '📌';
+        }
+
+        function clearNotifications() {
+            document.getElementById('notifications').innerHTML = '';
+            notificationCount = 0;
+            document.getElementById('counter').textContent = '0';
+        }
+
+        // Auto-conectar al cargar la página
+        window.onload = () => {
+            console.log('🚀 Página cargada. Haz clic en "Conectar" para iniciar.');
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""Detalle de item del carrito"""
+type CartItemDetailType {
+  """Descripción completa del item"""
+  descripcion: String!
+  productName: String!
+  quantity: Int!
+  subtotal: Float!
+  unitPrice: Float!
+}
+
+"""Item de carrito transformado"""
+type CartItemType {
+  """Fecha de creación"""
+  createdAt: String!
+  id: ID!
+
+  """Producto asociado"""
+  product: ProductType!
+
+  """Cantidad del producto"""
+  quantity: Int!
+
+  """Subtotal calculado (precio * cantidad)"""
+  subtotal: Float!
+}
+
+"""Resumen del carrito con cálculos"""
+type CartSummaryType {
+  cartId: String!
+
+  """Cantidad de items diferentes"""
+  itemCount: Int!
+
+  """Detalles de los items"""
+  items: [CartItemDetailType!]!
+
+  """IVA calculado (16%)"""
+  iva: Float!
+
+  """Total del carrito"""
+  total: Float!
+
+  """Total con IVA incluido"""
+  totalConIva: Float!
+
+  """Total formateado como texto"""
+  totalFormateado: String!
+}
+
+"""Carrito de compras transformado desde el REST"""
+type CartType {
+  """Cantidad total de items en el carrito"""
+  cantidadItems: Int!
+
+  """Fecha de creación"""
+  createdAt: String!
+
+  """Indica si el carrito está activo"""
+  estaActivo: Boolean!
+
+  """Descripción del estado del carrito"""
+  estadoDescripcion: String!
+  id: ID!
+
+  """Items del carrito"""
+  items: [CartItemType!]!
+
+  """Estado del carrito (active, ordered, cancelled)"""
+  status: String!
+
+  """Total del carrito (suma de subtotales)"""
+  total: Float!
+
+  """Fecha de última actualización"""
+  updatedAt: String!
+
+  """ID del usuario dueño del carrito"""
+  userId: String
+}
+
+"""Catálogo completo con análisis"""
+type CatalogType {
+  """Precio promedio"""
+  precioPromedio: Float!
+
+  """Todos los productos"""
+  productos: [ProductType!]!
+
+  """Productos agotados (stock = 0)"""
+  productosAgotados: Int!
+
+  """Productos disponibles (stock > 0)"""
+  productosDisponibles: Int!
+
+  """Total de productos"""
+  totalProductos: Int!
+
+  """Valor total del inventario"""
+  valorInventario: Float!
+}
+
+"""Producto con stock bajo"""
+type LowStockProductType {
+  """Nivel de urgencia (CRITICO, URGENTE, MODERADO)"""
+  nivelUrgencia: String!
+
+  """Datos del producto"""
+  producto: ProductType!
+
+  """Requiere reabastecimiento inmediato"""
+  requiereReabastecimiento: Boolean!
+
+  """Unidades restantes"""
+  unidadesRestantes: Int!
+}
+
+"""Producto transformado desde el REST"""
+type ProductType {
+  """Fecha de creación"""
+  createdAt: String!
+
+  """Descripción detallada"""
+  description: String
+
+  """Indica si el producto está disponible (stock > 0)"""
+  disponible: Boolean!
+
+  """Estado del stock (AGOTADO, BAJO, DISPONIBLE, ABUNDANTE)"""
+  estadoStock: String!
+  id: ID!
+
+  """URL de la imagen del producto"""
+  imageUrl: String
+
+  """Nombre del producto"""
+  name: String!
+
+  """Precio formateado con descuento simulado del 10%"""
+  precioConDescuento: Float!
+
+  """Precio unitario del producto"""
+  price: Float!
+
+  """Cantidad en inventario"""
+  stock: Int!
+
+  """Fecha de última actualización"""
+  updatedAt: String!
+}
+
+type Query {
+  """Obtiene un carrito por ID con datos transformados"""
+  carrito(id: ID!): CartType!
+
+  """Obtiene el catálogo completo con análisis estadístico del inventario"""
+  catalogo: CatalogType!
+
+  """Obtiene un producto por ID con transformaciones"""
+  producto(id: ID!): ProductType!
+
+  """Lista todos los productos con datos transformados"""
+  productos: [ProductType!]!
+
+  """Lista productos mostrando precio con descuento del 10%"""
+  productosConDescuento: [ProductType!]!
+
+  """Lista solo los productos con stock disponible (stock > 0)"""
+  productosDisponibles: [ProductType!]!
+
+  """
+  Obtiene productos con stock bajo con análisis de urgencia y reabastecimiento
+  """
+  productosStockBajo(
+    """Umbral de stock considerado bajo"""
+    umbral: Int! = 10
+  ): [LowStockProductType!]!
+
+  """
+  Obtiene el resumen del carrito con cálculos de IVA y totales formateados
+  """
+  resumenCarrito(id: ID!): CartSummaryType!
+}
